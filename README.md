@@ -13,6 +13,7 @@ precisemcp/
 ├── client_http.py       # HTTP client for SSE transport
 ├── client_streamable.py # HTTP client for Streamable HTTP transport
 ├── interactive_client.py # Interactive client with menu (stdio)
+├── test_transports.py   # Test script for all transport methods
 ├── pyproject.toml       # Dependencies
 └── README.md           # This file
 ```
@@ -83,6 +84,7 @@ uv run python3 interactive_client.py
 **Terminal 1 - Start SSE Server:**
 ```bash
 uv run python3 server.py
+# Server runs on http://localhost:8000/sse
 ```
 
 **Terminal 2 - Run SSE Client:**
@@ -95,11 +97,20 @@ uv run python3 client_http.py
 **Terminal 1 - Start Streamable HTTP Server:**
 ```bash
 uv run python3 server_streamable.py
+# Server runs on http://localhost:8000/mcp
 ```
 
 **Terminal 2 - Run Streamable HTTP Client:**
 ```bash
 uv run python3 client_streamable.py
+```
+
+### Test All Transports
+
+Run the comprehensive test suite to verify all transport methods:
+
+```bash
+uv run python3 test_transports.py
 ```
 
 ## 🌐 Transport Comparison
@@ -112,14 +123,14 @@ uv run python3 client_streamable.py
 - ❌ Limited scalability
 
 ### SSE Transport
-- ✅ Independent server process
+- ✅ Independent server process (port 8000)
 - ✅ Multiple clients can connect
 - ✅ HTTP-based, firewall-friendly
 - ✅ Real-time server-to-client events
 - ⚠️ Being superseded by Streamable HTTP
 
 ### Streamable HTTP Transport (Recommended)
-- ✅ Independent server process
+- ✅ Independent server process (port 8000)
 - ✅ Multiple clients can connect
 - ✅ Better scalability and performance
 - ✅ Stateless operation option
@@ -198,6 +209,11 @@ uv run python3 client_streamable.py
 uv run python3 interactive_client.py
 ```
 
+### Test All Transports
+```bash
+uv run python3 test_transports.py
+```
+
 ## 🤝 Architecture Comparison
 
 ### stdio Architecture
@@ -216,8 +232,8 @@ uv run python3 interactive_client.py
 ┌─────────────────┐    HTTP/SSE      ┌─────────────────┐
 │   MCP Client    │◄─────────────────►│   MCP Server    │
 │                 │                   │  (independent)  │
-│ - client_http   │     Port 8080     │ - server.py     │
-│ - client_       │     Port 8081     │ - server_       │
+│ - client_http   │     Port 8000     │ - server.py     │
+│ - client_       │     Port 8000     │ - server_       │
 │   streamable    │                   │   streamable.py │
 └─────────────────┘                   └─────────────────┘
 ```
@@ -245,6 +261,7 @@ uv run python3 interactive_client.py
 5. **Error Handling**: More robust error handling and recovery
 6. **WebSocket Support**: Add WebSocket transport option
 7. **Load Balancing**: Configure multiple server instances
+8. **Port Configuration**: Add environment variable support for custom ports
 
 ## 📝 License
 
