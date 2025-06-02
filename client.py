@@ -10,6 +10,7 @@ import json
 import logging
 from mcp.client.session import ClientSession
 from mcp.client.stdio import stdio_client
+from mcp import StdioServerParameters
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,10 +22,11 @@ async def main():
     print("=" * 50)
     
     # Connect to the MCP server
-    server_params = {
-        "command": "python3",
-        "args": ["main.py"]
-    }
+    server_params = StdioServerParameters(
+        command="python3",
+        args=["main.py"],
+        env=None
+    )
     
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -32,8 +34,6 @@ async def main():
             await session.initialize()
             
             print("✅ Connected to MCP Server!")
-            print(f"📋 Server: {session.server_name}")
-            print(f"📝 Version: {session.server_version}")
             print()
             
             # List available resources

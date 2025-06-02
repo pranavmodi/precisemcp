@@ -9,6 +9,7 @@ import asyncio
 import logging
 from mcp.client.session import ClientSession
 from mcp.client.stdio import stdio_client
+from mcp import StdioServerParameters
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)  # Reduce noise for interactive use
@@ -22,10 +23,11 @@ class InteractiveMCPClient:
     
     async def connect(self):
         """Connect to the MCP server."""
-        server_params = {
-            "command": "python3",
-            "args": ["main.py"]
-        }
+        server_params = StdioServerParameters(
+            command="python3",
+            args=["main.py"],
+            env=None
+        )
         
         self.stdio_client = stdio_client(server_params)
         read, write = await self.stdio_client.__aenter__()
@@ -157,7 +159,7 @@ class InteractiveMCPClient:
         """Main application loop."""
         try:
             await self.connect()
-            print(f"✅ Connected to MCP Server: {self.session.server_name}")
+            print("✅ Connected to MCP Server!")
             
             while True:
                 self.display_menu()
