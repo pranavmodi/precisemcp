@@ -1,14 +1,18 @@
 # MCP Server & Client Example
 
-This repository contains a complete example of an MCP (Model Context Protocol) server and client applications. It demonstrates how to build and use MCP tools and resources.
+This repository contains a complete example of an MCP (Model Context Protocol) server and client applications. It demonstrates how to build and use MCP tools and resources with **both stdio and independent HTTP transports**.
 
 ## 🏗️ Project Structure
 
 ```
 precisemcp/
-├── main.py              # MCP Server with tools and resources
-├── client.py            # Simple demonstration client
-├── interactive_client.py # Interactive client with menu
+├── main.py              # Original MCP Server (stdio transport)
+├── server.py            # Independent MCP Server (SSE transport)
+├── server_streamable.py # Independent MCP Server (Streamable HTTP transport)
+├── client.py            # Simple demonstration client (stdio)
+├── client_http.py       # HTTP client for SSE transport
+├── client_streamable.py # HTTP client for Streamable HTTP transport
+├── interactive_client.py # Interactive client with menu (stdio)
 ├── pyproject.toml       # Dependencies
 └── README.md           # This file
 ```
@@ -45,7 +49,9 @@ precisemcp/
 
 ## 🖥️ Running the Applications
 
-### 1. MCP Server Only
+### Option 1: Original stdio Setup (Server as subprocess)
+
+#### 1. MCP Server Only
 
 Start the MCP server to accept connections from other MCP clients:
 
@@ -53,13 +59,7 @@ Start the MCP server to accept connections from other MCP clients:
 uv run python3 main.py
 ```
 
-The server will start and output:
-```
-Starting MCP server...
-MCP server started
-```
-
-### 2. Demo Client
+#### 2. Demo Client
 
 Run the simple demonstration client that tests all tools:
 
@@ -68,13 +68,7 @@ Run the simple demonstration client that tests all tools:
 uv run python3 client.py
 ```
 
-This will:
-- Connect to the MCP server
-- List all available tools and resources
-- Test each tool with sample data
-- Display the results
-
-### 3. Interactive Client
+#### 3. Interactive Client
 
 Run the interactive client for hands-on exploration:
 
@@ -82,20 +76,66 @@ Run the interactive client for hands-on exploration:
 uv run python3 interactive_client.py
 ```
 
-This provides a menu-driven interface where you can:
-- View available tools and resources
-- Test individual tools with your own input
-- Run a complete demo
+### Option 2: Independent HTTP Servers (Recommended)
+
+#### SSE Transport Server
+
+**Terminal 1 - Start SSE Server:**
+```bash
+uv run python3 server.py
+```
+
+**Terminal 2 - Run SSE Client:**
+```bash
+uv run python3 client_http.py
+```
+
+#### Streamable HTTP Transport Server (Preferred for Production)
+
+**Terminal 1 - Start Streamable HTTP Server:**
+```bash
+uv run python3 server_streamable.py
+```
+
+**Terminal 2 - Run Streamable HTTP Client:**
+```bash
+uv run python3 client_streamable.py
+```
+
+## 🌐 Transport Comparison
+
+### stdio Transport (Original)
+- ✅ Simple development setup
+- ✅ Single process management
+- ❌ Client spawns server as subprocess
+- ❌ Not suitable for multi-client scenarios
+- ❌ Limited scalability
+
+### SSE Transport
+- ✅ Independent server process
+- ✅ Multiple clients can connect
+- ✅ HTTP-based, firewall-friendly
+- ✅ Real-time server-to-client events
+- ⚠️ Being superseded by Streamable HTTP
+
+### Streamable HTTP Transport (Recommended)
+- ✅ Independent server process
+- ✅ Multiple clients can connect
+- ✅ Better scalability and performance
+- ✅ Stateless operation option
+- ✅ Production-ready
+- ✅ Resumable sessions with event stores
 
 ## 🔧 Available Tools
 
-The MCP server provides these tools:
+All server variants provide these tools:
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `say_hello` | Greet someone by name | `name: str` |
 | `add_numbers` | Add two numbers together | `a: float, b: float` |
 | `get_weather` | Get weather for a city (mock data) | `city: str` |
+| `calculate_fibonacci` | Calculate fibonacci number | `n: int` (Streamable server only) |
 
 ## 📚 Available Resources
 
@@ -107,7 +147,7 @@ The MCP server provides these tools:
 
 ### Adding New Tools
 
-To add a new tool to the server, use the `@mcp.tool()` decorator:
+To add a new tool to any server, use the `@mcp.tool()` decorator:
 
 ```python
 @mcp.tool()
@@ -133,16 +173,9 @@ async def your_resource() -> str:
     return "Your resource content"
 ```
 
-### Client Integration
-
-The clients demonstrate two approaches:
-
-1. **Programmatic** (`client.py`): Direct tool calls for automation
-2. **Interactive** (`interactive_client.py`): User-driven exploration
-
 ## 🏃‍♂️ Example Usage
 
-### Quick Test
+### Quick Test (stdio)
 ```bash
 # Terminal 1: Start server
 uv run python3 main.py
@@ -151,56 +184,57 @@ uv run python3 main.py
 uv run python3 client.py
 ```
 
-### Interactive Session
+### Independent Server Test (HTTP)
+```bash
+# Terminal 1: Start independent server
+uv run python3 server_streamable.py
+
+# Terminal 2: Run HTTP client
+uv run python3 client_streamable.py
+```
+
+### Interactive Session (stdio)
 ```bash
 uv run python3 interactive_client.py
 ```
 
-Then choose from the menu:
+## 🤝 Architecture Comparison
+
+### stdio Architecture
 ```
-🚀 Interactive MCP Client
-============================================================
-Choose an option:
-1. 📚 View available resources
-2. 🔧 View available tools
-3. 👋 Say hello to someone
-4. ➕ Add two numbers
-5. 🌤️  Get weather for a city
-6. 📖 Read greeting resource
-7. 🎯 Test all tools (demo mode)
-0. 🚪 Exit
-```
-
-## 📦 Dependencies
-
-- `mcp[cli]>=1.9.1` - MCP framework with CLI tools
-- `httpx>=0.28.1` - HTTP client (for future web API tools)
-
-## 🤝 Architecture
-
-```
-┌─────────────────┐    MCP Protocol    ┌─────────────────┐
+┌─────────────────┐    stdio pipes    ┌─────────────────┐
 │   MCP Client    │◄──────────────────►│   MCP Server    │
-│                 │                    │                 │
+│                 │                    │   (subprocess)  │
 │ - client.py     │                    │ - main.py       │
 │ - interactive   │                    │ - Tools         │
 │   _client.py    │                    │ - Resources     │
 └─────────────────┘                    └─────────────────┘
 ```
 
-## 🤔 Why Same Repository?
+### HTTP Architecture
+```
+┌─────────────────┐    HTTP/SSE      ┌─────────────────┐
+│   MCP Client    │◄─────────────────►│   MCP Server    │
+│                 │                   │  (independent)  │
+│ - client_http   │     Port 8080     │ - server.py     │
+│ - client_       │     Port 8081     │ - server_       │
+│   streamable    │                   │   streamable.py │
+└─────────────────┘                   └─────────────────┘
+```
 
-Having both server and client in the same repo is **recommended** for:
+## 🌟 Benefits of Independent Servers
 
-- ✅ **Development & Testing**: Easy to test server changes
-- ✅ **Documentation**: Complete working examples
-- ✅ **Shared Dependencies**: No duplication
-- ✅ **Simple Deployment**: Everything in one place
+1. **Scalability**: Multiple clients can connect simultaneously
+2. **Deployment Flexibility**: Server can run on different machines
+3. **Production Ready**: Better suited for real-world applications
+4. **Resource Efficiency**: No subprocess overhead
+5. **Network Transparent**: Works across network boundaries
+6. **Stateless Options**: Better for load balancing and cloud deployment
 
-Consider separating when:
-- 🔄 **Production Use**: Different release cycles
-- 📦 **Distribution**: Independent packaging needed
-- 🎯 **Specialized Clients**: Very different requirements
+## 📦 Dependencies
+
+- `mcp[cli]>=1.9.1` - MCP framework with CLI tools
+- `httpx>=0.28.1` - HTTP client (for future web API tools)
 
 ## 🚀 Next Steps
 
@@ -209,6 +243,8 @@ Consider separating when:
 3. **Authentication**: Add secure authentication for production use
 4. **Logging**: Enhanced logging and monitoring
 5. **Error Handling**: More robust error handling and recovery
+6. **WebSocket Support**: Add WebSocket transport option
+7. **Load Balancing**: Configure multiple server instances
 
 ## 📝 License
 
