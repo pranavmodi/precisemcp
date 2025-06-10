@@ -8,7 +8,7 @@ This repository contains a complete example of an MCP (Model Context Protocol) s
 precisemcp/
 ├── main.py              # Original MCP Server (stdio transport)
 ├── server.py            # Independent MCP Server (SSE transport)
-├── server_streamable.py # Independent MCP Server (Streamable HTTP transport)
+├── mcp_precise.py       # Independent MCP Server (Streamable HTTP transport)
 ├── client.py            # Simple demonstration client (stdio)
 ├── client_http.py       # HTTP client for SSE transport
 ├── client_streamable.py # HTTP client for Streamable HTTP transport
@@ -96,8 +96,10 @@ uv run python3 client_http.py
 
 **Terminal 1 - Start Streamable HTTP Server:**
 ```bash
-uv run python3 server_streamable.py
-# Server runs on http://localhost:8000/mcp
+uv run python3 mcp_precise.py
+# Server runs on http://localhost:8000/mcp by default.
+# The port can be configured with the PORT environment variable.
+# e.g. PORT=8001 uv run python3 mcp_precise.py
 ```
 
 **Terminal 2 - Run Streamable HTTP Client:**
@@ -198,7 +200,7 @@ uv run python3 client.py
 ### Independent Server Test (HTTP)
 ```bash
 # Terminal 1: Start independent server
-uv run python3 server_streamable.py
+uv run python3 mcp_precise.py
 
 # Terminal 2: Run HTTP client
 uv run python3 client_streamable.py
@@ -233,8 +235,8 @@ uv run python3 test_transports.py
 │   MCP Client    │◄─────────────────►│   MCP Server    │
 │                 │                   │  (independent)  │
 │ - client_http   │     Port 8000     │ - server.py     │
-│ - client_       │     Port 8000     │ - server_       │
-│   streamable    │                   │   streamable.py │
+│ - client_       │     Port 8000     │ - mcp_precise.py│
+│   streamable    │                   │                 │
 └─────────────────┘                   └─────────────────┘
 ```
 
