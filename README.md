@@ -96,11 +96,13 @@ uv run python3 client_http.py
 
 **Terminal 1 - Start Streamable HTTP Server:**
 ```bash
+# Run on default port 8000
 uv run python3 mcp_precise.py
-# Server runs on http://localhost:8000/mcp by default.
-# The port can be configured with the PORT environment variable.
-# e.g. PORT=8001 uv run python3 mcp_precise.py
+
+# Run on a custom port (e.g., 8001)
+PORT=8001 uv run python3 mcp_precise.py
 ```
+The server will print the exact URL it's running on.
 
 **Terminal 2 - Run Streamable HTTP Client:**
 ```bash
@@ -253,6 +255,7 @@ uv run python3 test_transports.py
 
 - `mcp[cli]>=1.9.1` - MCP framework with CLI tools
 - `httpx>=0.28.1` - HTTP client (for future web API tools)
+- `uvicorn` - for running the server
 
 ## 🚀 Next Steps
 

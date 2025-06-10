@@ -14,6 +14,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
 import httpx
 import os
+import uvicorn
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +25,9 @@ RADFLOW_API_URL = os.getenv("RADFLOW_API_URL", "https://app.radflow360.com/chatb
 
 # Create FastMCP server instance with streamable HTTP support
 mcp = FastMCP("precise-mcp-server", stateless_http=True)
+
+# Expose the ASGI app
+app = mcp.streamable_http_app()
 
 def process_patient_data(data: Dict[str, Any], phone: str) -> Dict[str, Any]:
     """
@@ -534,7 +538,7 @@ if __name__ == "__main__":
     print("🚀 Starting PreciseMCP Server...")
     print("=" * 60)
     print("Server will be available at:")
-    print(f"  🌐 HTTP endpoint: http://localhost:{port}/mcp")
+    print(f"  🌐 HTTP endpoint: http://localhost:{port}")
     print("  📡 This server uses Streamable HTTP transport")
     print("  🔄 Stateless operation for better scalability")
     print("  🏥 RadFlow API integration enabled")
@@ -542,5 +546,5 @@ if __name__ == "__main__":
     print("  📋 Study details retrieval")
     print("=" * 60)
     
-    # Run with streamable HTTP transport
-    mcp.run(transport="streamable-http", port=port) 
+    # Run with uvicorn for better control over port
+    uvicorn.run(app, host="0.0.0.0", port=port) 
