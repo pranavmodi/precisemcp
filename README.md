@@ -8,6 +8,7 @@ This repository contains an example of an MCP (Model Context Protocol) server ap
 precisemcp/
 ├── mcp_precise.py       # Independent MCP Server (Streamable HTTP transport)
 ├── mcp_utils.py         # Utilities for the MCP server
+├── test_client.py       # Client for testing server tools
 ├── pyproject.toml       # Dependencies
 └── README.md           # This file
 ```
@@ -54,6 +55,15 @@ PORT=8001 uv run python3 mcp_precise.py
 ```
 The server will print the exact URL it's running on.
 
+### Running the Test Client
+
+Once the server is running, you can use the test client to verify the functionality of the tools.
+
+**Terminal 2 - Run Test Client:**
+```bash
+uv run python3 test_client.py
+```
+
 ## 🔧 Available Tools
 
 | Tool | Description | Parameters |
@@ -62,6 +72,7 @@ The server will print the exact URL it's running on.
 | `fetch_patient_by_id` | Fetch patient information by ID from the RadFlow API. | `patient_id: str` |
 | `fetch_study_details` | Fetch study details for a patient by their ID. | `patient_id: str` |
 | `fetch_patient_by_phone` | Fetch patient data from the API using phone number. | `phone: str` |
+| `get_patient_todo_status` | Get the to-do status for a patient from the RadFlow API. | `patient_id: str`, `document_type_id: int = 21`, `logged_partner_id: int = 1`, `patient_preferred_language: str = "english"` |
 
 ## 📚 Available Resources
 

@@ -9,6 +9,8 @@ import asyncio
 import logging
 import json
 import traceback
+import time
+import jwt
 from typing import Dict, Any
 from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
@@ -22,12 +24,15 @@ logger = logging.getLogger("precise-mcp-server")
 
 # Configuration - You'll need to set this to your actual API URL
 RADFLOW_API_URL = os.getenv("RADFLOW_API_URL", "https://app.radflow360.com/chatbotapi/Patient/GetPatientStudyRelatedDetails")
+RADFLOW_PARTNER_API_URL = os.getenv("RADFLOW_PARTNER_API_URL", "https://staging-app.radflow360.com/patientportalapi/Partner/GetRefreshToken")
+RADFLOW_TODO_STATUS_API_URL = os.getenv("RADFLOW_TODO_STATUS_API_URL", "https://staging-app.radflow360.com/patientportalapi/Patient/GetPatientToDoStatus")
+PARTNER_API_KEY = "f0M65v8av8ns3iZ4XFEacXc1dKWqWI6756Nb4nRVymYysN1jtKmSBQUyEfgGeRc3tDyBF5bP61Z8VcT4zm8GvCe8xSiLgS143V6Y3OQ4a062qutS13qgx55T4A9DNhAk"
+
+# In-memory cache for the JWT
+JWT_CACHE = {"token": None, "expires_at": 0}
 
 # Create FastMCP server instance with streamable HTTP support
 mcp = FastMCP("precise-mcp-server", stateless_http=True)
-
-# Expose the ASGI app
-app = mcp.streamable_http_app()
 
 def process_patient_data(data: Dict[str, Any], phone: str) -> Dict[str, Any]:
     """
@@ -530,6 +535,128 @@ async def fetch_patient_by_phone(phone: str) -> str:
             "success": False,
             "error": error_msg
         })
+
+async def _get_and_cache_jwt_token() -> str:
+    """
+    Get a JWT token, using a cache to avoid repeated requests.
+    If the cached token is expired or not present, it fetches a new one.
+
+    Returns:
+        The JWT token string.
+
+    Raises:
+        Exception: If fetching or parsing the token fails.
+    """
+    # Check if the cached token is still valid (with a 60-second buffer)
+    if JWT_CACHE["token"] and JWT_CACHE["expires_at"] > time.time() + 60:
+        logger.info("Using cached JWT token.")
+        return JWT_CACHE["token"]
+
+    logger.info("Fetching new JWT token.")
+    url = f"{RADFLOW_PARTNER_API_URL}?partnerApiKey={PARTNER_API_KEY}"
+    headers = {"Accept": "application/json"}
+
+    async with httpx.AsyncClient(verify=False) as client:
+        try:
+            response = await client.post(url, headers=headers, timeout=30.0)
+            response.raise_for_status()  # Will raise an exception for 4xx/5xx status
+            
+            data = response.json()
+            token_data = data.get("result") # The token data is in the 'result' field
+
+            if not token_data:
+                raise ValueError("API response missing 'result' object")
+
+            jwt_token = token_data.get("jwtToken")
+
+            if not jwt_token:
+                raise ValueError("JWT token is missing or invalid in API response")
+
+            # Decode the token to get the expiration time from its payload
+            decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
+            expires_at = decoded_token.get("exp")
+
+            if not expires_at:
+                raise ValueError("Expiration time ('exp') not found in JWT payload")
+
+            # Update cache
+            JWT_CACHE["token"] = jwt_token
+            JWT_CACHE["expires_at"] = expires_at
+            logger.info("Successfully fetched and cached new JWT token.")
+            
+            return jwt_token
+
+        except (httpx.RequestError, httpx.HTTPStatusError, json.JSONDecodeError, ValueError, jwt.PyJWTError) as e:
+            logger.error(f"Failed to get or cache JWT token: {e}")
+            raise Exception(f"Could not retrieve authentication token: {e}")
+
+@mcp.tool()
+async def get_patient_todo_status(
+    patient_id: str,
+    document_type_id: int = 21,
+    logged_partner_id: int = 1,
+    patient_preferred_language: str = "english"
+) -> str:
+    """
+    Get the to-do status for a patient from the RadFlow API.
+
+    Args:
+        patient_id: The ID of the patient.
+        document_type_id: The type ID of the document.
+        logged_partner_id: The ID of the logged-in partner.
+        patient_preferred_language: The patient's preferred language.
+
+    Returns:
+        JSON string with the to-do status or an error.
+    """
+    try:
+        logger.info(f"Fetching to-do status for patient ID: {patient_id}")
+
+        # Get the JWT token using the caching mechanism
+        jwt_token = await _get_and_cache_jwt_token()
+
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {jwt_token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "patientId": patient_id,
+            "documentTypeId": document_type_id,
+            "loggedPartnerId": logged_partner_id,
+            "jwtToken": jwt_token,
+            "patientPreferredLanguage": patient_preferred_language
+        }
+
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.post(
+                RADFLOW_TODO_STATUS_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=30.0
+            )
+
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    logger.info("Successfully retrieved patient to-do status.")
+                    return json.dumps({"success": True, "status": data}, indent=2)
+                except json.JSONDecodeError:
+                    logger.error("Failed to parse JSON response from to-do status endpoint.")
+                    return json.dumps({"success": False, "error": "Invalid JSON response from API"})
+            else:
+                error_msg = f"API request failed with status {response.status_code}: {response.text}"
+                logger.error(error_msg)
+                return json.dumps({"success": False, "error": error_msg})
+
+    except Exception as e:
+        error_msg = f"An unexpected error occurred while getting patient to-do status: {str(e)}"
+        logger.error(f"{error_msg}\nTraceback: {traceback.format_exc()}")
+        return json.dumps({"success": False, "error": error_msg})
+
+# Expose the ASGI app *after* all tools and resources are defined
+app = mcp.streamable_http_app()
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))

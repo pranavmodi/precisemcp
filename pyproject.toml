@@ -1,10 +1,19 @@
 [project]
-name = "hello"
+name = "precisemcp"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "httpx>=0.28.1",
-    "mcp[cli]>=1.9.1",
+description = "Default template for PDM package"
+authors = [
+    {name = "", email = ""},
 ]
+dependencies = [
+    "mcp[cli]>=1.9.1",
+    "httpx>=0.28.1",
+    "uvicorn",
+    "PyJWT>=2.8.0",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.pdm]
+distribution = false
