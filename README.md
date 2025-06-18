@@ -1,19 +1,13 @@
-# MCP Server & Client Example
+# MCP Server Example
 
-This repository contains a complete example of an MCP (Model Context Protocol) server and client applications. It demonstrates how to build and use MCP tools and resources with **both stdio and independent HTTP transports**.
+This repository contains an example of an MCP (Model Context Protocol) server application. It demonstrates how to build and use MCP tools and resources with a streamable HTTP transport.
 
 ## 🏗️ Project Structure
 
 ```
 precisemcp/
-├── main.py              # Original MCP Server (stdio transport)
-├── server.py            # Independent MCP Server (SSE transport)
 ├── mcp_precise.py       # Independent MCP Server (Streamable HTTP transport)
-├── client.py            # Simple demonstration client (stdio)
-├── client_http.py       # HTTP client for SSE transport
-├── client_streamable.py # HTTP client for Streamable HTTP transport
-├── interactive_client.py # Interactive client with menu (stdio)
-├── test_transports.py   # Test script for all transport methods
+├── mcp_utils.py         # Utilities for the MCP server
 ├── pyproject.toml       # Dependencies
 └── README.md           # This file
 ```
@@ -48,51 +42,7 @@ precisemcp/
    uv sync
    ```
 
-## 🖥️ Running the Applications
-
-### Option 1: Original stdio Setup (Server as subprocess)
-
-#### 1. MCP Server Only
-
-Start the MCP server to accept connections from other MCP clients:
-
-```bash
-uv run python3 main.py
-```
-
-#### 2. Demo Client
-
-Run the simple demonstration client that tests all tools:
-
-```bash
-# In a new terminal window
-uv run python3 client.py
-```
-
-#### 3. Interactive Client
-
-Run the interactive client for hands-on exploration:
-
-```bash
-uv run python3 interactive_client.py
-```
-
-### Option 2: Independent HTTP Servers (Recommended)
-
-#### SSE Transport Server
-
-**Terminal 1 - Start SSE Server:**
-```bash
-uv run python3 server.py
-# Server runs on http://localhost:8000/sse
-```
-
-**Terminal 2 - Run SSE Client:**
-```bash
-uv run python3 client_http.py
-```
-
-#### Streamable HTTP Transport Server (Preferred for Production)
+## 🖥️ Running the Application
 
 **Terminal 1 - Start Streamable HTTP Server:**
 ```bash
@@ -104,53 +54,14 @@ PORT=8001 uv run python3 mcp_precise.py
 ```
 The server will print the exact URL it's running on.
 
-**Terminal 2 - Run Streamable HTTP Client:**
-```bash
-uv run python3 client_streamable.py
-```
-
-### Test All Transports
-
-Run the comprehensive test suite to verify all transport methods:
-
-```bash
-uv run python3 test_transports.py
-```
-
-## 🌐 Transport Comparison
-
-### stdio Transport (Original)
-- ✅ Simple development setup
-- ✅ Single process management
-- ❌ Client spawns server as subprocess
-- ❌ Not suitable for multi-client scenarios
-- ❌ Limited scalability
-
-### SSE Transport
-- ✅ Independent server process (port 8000)
-- ✅ Multiple clients can connect
-- ✅ HTTP-based, firewall-friendly
-- ✅ Real-time server-to-client events
-- ⚠️ Being superseded by Streamable HTTP
-
-### Streamable HTTP Transport (Recommended)
-- ✅ Independent server process (port 8000)
-- ✅ Multiple clients can connect
-- ✅ Better scalability and performance
-- ✅ Stateless operation option
-- ✅ Production-ready
-- ✅ Resumable sessions with event stores
-
 ## 🔧 Available Tools
-
-All server variants provide these tools:
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
-| `say_hello` | Greet someone by name | `name: str` |
-| `add_numbers` | Add two numbers together | `a: float, b: float` |
-| `get_weather` | Get weather for a city (mock data) | `city: str` |
-| `calculate_fibonacci` | Calculate fibonacci number | `n: int` (Streamable server only) |
+| `fetch_patient_info` | Fetch patient information from the RadFlow API using patient ID. | `patient_id: str`, `conversation_id: str = "default"` |
+| `fetch_patient_by_id` | Fetch patient information by ID from the RadFlow API. | `patient_id: str` |
+| `fetch_study_details` | Fetch study details for a patient by their ID. | `patient_id: str` |
+| `fetch_patient_by_phone` | Fetch patient data from the API using phone number. | `phone: str` |
 
 ## 📚 Available Resources
 
@@ -188,61 +99,7 @@ async def your_resource() -> str:
     return "Your resource content"
 ```
 
-## 🏃‍♂️ Example Usage
-
-### Quick Test (stdio)
-```bash
-# Terminal 1: Start server
-uv run python3 main.py
-
-# Terminal 2: Run demo client
-uv run python3 client.py
-```
-
-### Independent Server Test (HTTP)
-```bash
-# Terminal 1: Start independent server
-uv run python3 mcp_precise.py
-
-# Terminal 2: Run HTTP client
-uv run python3 client_streamable.py
-```
-
-### Interactive Session (stdio)
-```bash
-uv run python3 interactive_client.py
-```
-
-### Test All Transports
-```bash
-uv run python3 test_transports.py
-```
-
-## 🤝 Architecture Comparison
-
-### stdio Architecture
-```
-┌─────────────────┐    stdio pipes    ┌─────────────────┐
-│   MCP Client    │◄──────────────────►│   MCP Server    │
-│                 │                    │   (subprocess)  │
-│ - client.py     │                    │ - main.py       │
-│ - interactive   │                    │ - Tools         │
-│   _client.py    │                    │ - Resources     │
-└─────────────────┘                    └─────────────────┘
-```
-
-### HTTP Architecture
-```
-┌─────────────────┐    HTTP/SSE      ┌─────────────────┐
-│   MCP Client    │◄─────────────────►│   MCP Server    │
-│                 │                   │  (independent)  │
-│ - client_http   │     Port 8000     │ - server.py     │
-│ - client_       │     Port 8000     │ - mcp_precise.py│
-│   streamable    │                   │                 │
-└─────────────────┘                   └─────────────────┘
-```
-
-## 🌟 Benefits of Independent Servers
+## 🌟 Benefits of an Independent Server
 
 1. **Scalability**: Multiple clients can connect simultaneously
 2. **Deployment Flexibility**: Server can run on different machines
@@ -254,7 +111,6 @@ uv run python3 test_transports.py
 ## 📦 Dependencies
 
 - `mcp[cli]>=1.9.1` - MCP framework with CLI tools
-- `httpx>=0.28.1` - HTTP client (for future web API tools)
 - `uvicorn` - for running the server
 
 ## 🚀 Next Steps
