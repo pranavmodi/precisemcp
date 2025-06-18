@@ -58,7 +58,7 @@ The server will print the exact URL it's running on.
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
-| `fetch_patient_info` | Fetch patient information from the RadFlow API using patient ID. | `patient_id: str`, `conversation_id: str = "default"` |
+| `fetch_patient_info` | Fetch patient information from the RadFlow API using patient ID. | `patient_id: str` |
 | `fetch_patient_by_id` | Fetch patient information by ID from the RadFlow API. | `patient_id: str` |
 | `fetch_study_details` | Fetch study details for a patient by their ID. | `patient_id: str` |
 | `fetch_patient_by_phone` | Fetch patient data from the API using phone number. | `phone: str` |

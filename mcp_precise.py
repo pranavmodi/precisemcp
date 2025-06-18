@@ -120,16 +120,15 @@ async def get_greeting() -> str:
     return "Hello from your RadFlow MCP server! 🚀"
 
 @mcp.tool()
-async def fetch_patient_info(patient_id: str, conversation_id: str = "default") -> str:
+async def fetch_patient_info(patient_id: str) -> str:
     """
     Fetch patient information from the RadFlow API using patient ID.
     
     Args:
         patient_id: The patient ID to fetch information for
-        conversation_id: Optional conversation ID for tracking (defaults to 'default')
     """
     try:
-        logger.info(f"Fetching patient data for patient_id: {patient_id}, conversation_id: {conversation_id}")
+        logger.info(f"Fetching patient data for patient_id: {patient_id}")
         
         payload = {
             "patientId": patient_id,
@@ -192,7 +191,6 @@ async def fetch_patient_info(patient_id: str, conversation_id: str = "default") 
                 result_with_metadata = {
                     "success": result["success"],
                     "patient_id": patient_id,
-                    "conversation_id": conversation_id,
                     "data": result,
                     "message": result.get("message", f"Retrieved patient information for ID: {patient_id}")
                 }
