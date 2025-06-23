@@ -11,7 +11,7 @@ import json
 import traceback
 import time
 import jwt
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
 import httpx
@@ -27,6 +27,12 @@ RADFLOW_API_URL = os.getenv("RADFLOW_API_URL", "https://app.radflow360.com/chatb
 RADFLOW_PARTNER_API_URL = os.getenv("RADFLOW_PARTNER_API_URL", "https://staging-app.radflow360.com/patientportalapi/Partner/GetRefreshToken")
 RADFLOW_TODO_STATUS_API_URL = os.getenv("RADFLOW_TODO_STATUS_API_URL", "https://staging-app.radflow360.com/patientportalapi/Patient/GetPatientToDoStatus")
 PARTNER_API_KEY = "f0M65v8av8ns3iZ4XFEacXc1dKWqWI6756Nb4nRVymYysN1jtKmSBQUyEfgGeRc3tDyBF5bP61Z8VcT4zm8GvCe8xSiLgS143V6Y3OQ4a062qutS13qgx55T4A9DNhAk"
+# Chatbot API configuration
+CHATBOT_API_USER = "Chatbot"
+CHATBOT_API_PASSWORD = "lcNvSuG3pXDb0rht6Vwh0rhDpXCCzCzCzWe4L3GjQsGHpXiz0rxZ6V4s9K8W5eLcv"
+GET_CASE_UPDATE_DETAILS_URL = "https://staging-app.radflow360.com/chatbotapi/GetCaseUpdateDetailsChatbot"
+GET_PATIENT_REPORT_URL = "https://staging-app.radflow360.com/chatbotapi/GetPatientReportChatbot"
+INSERT_CASE_UPDATE_LOG_URL = "https://staging-app.radflow360.com/chatbotapi/InsertCaseUpdateLogChatbot"
 
 # In-memory cache for the JWT
 JWT_CACHE = {"token": None, "expires_at": 0}
@@ -535,6 +541,173 @@ async def fetch_patient_by_phone(phone: str) -> str:
             "success": False,
             "error": error_msg
         })
+
+@mcp.tool()
+async def get_case_update_details(patient_id: str) -> str:
+    """
+    Fetches case update details for a given patient.
+
+    Args:
+        patient_id: The ID of the patient.
+
+    Returns:
+        A JSON string containing the case update details or an error message.
+    """
+    logger.info(f"Fetching case update details for patient ID: {patient_id}")
+    try:
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        payload = {"patientID": patient_id}
+        auth = (CHATBOT_API_USER, CHATBOT_API_PASSWORD)
+
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.post(
+                GET_CASE_UPDATE_DETAILS_URL,
+                json=payload,
+                headers=headers,
+                auth=auth,
+                timeout=30.0
+            )
+            response.raise_for_status()
+            return json.dumps({"success": True, "data": response.json()})
+
+    except httpx.HTTPStatusError as e:
+        error_msg = f"HTTP error occurred: {e.response.status_code} - {e.response.text}"
+        logger.error(error_msg)
+        return json.dumps({"success": False, "error": error_msg})
+    except Exception as e:
+        error_msg = f"An unexpected error occurred: {e}"
+        logger.error(f"{error_msg}\nTraceback: {traceback.format_exc()}")
+        return json.dumps({"success": False, "error": error_msg})
+
+@mcp.tool()
+async def get_patient_report(patient_id: str) -> str:
+    """
+    Fetches the report for a given patient.
+
+    Args:
+        patient_id: The ID of the patient.
+
+    Returns:
+        A JSON string containing the patient report or an error message.
+    """
+    logger.info(f"Fetching patient report for patient ID: {patient_id}")
+    try:
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        payload = {"patientID": patient_id}
+        auth = (CHATBOT_API_USER, CHATBOT_API_PASSWORD)
+
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.post(
+                GET_PATIENT_REPORT_URL,
+                json=payload,
+                headers=headers,
+                auth=auth,
+                timeout=30.0
+            )
+            response.raise_for_status()
+            return json.dumps({"success": True, "data": response.json()})
+
+    except httpx.HTTPStatusError as e:
+        error_msg = f"HTTP error occurred: {e.response.status_code} - {e.response.text}"
+        logger.error(error_msg)
+        return json.dumps({"success": False, "error": error_msg})
+    except Exception as e:
+        error_msg = f"An unexpected error occurred: {e}"
+        logger.error(f"{error_msg}\nTraceback: {traceback.format_exc()}")
+        return json.dumps({"success": False, "error": error_msg})
+
+@mcp.tool()
+async def insert_case_update_log(
+    patient_id: str,
+    user_name: str,
+    event_id: int,
+    notes: Optional[str] = None,
+    liability_expected_date: Optional[str] = None,
+    expected_payment_date: Optional[str] = None,
+    payment_date_sent: Optional[str] = None,
+    check_number: Optional[str] = None,
+    check_amount: Optional[float] = None,
+    send_payment_of_estimated_date: Optional[str] = None,
+) -> str:
+    """
+    Inserts a case update log for a patient.
+
+    Args:
+        patient_id: The ID of the patient.
+        user_name: The name of the user performing the action.
+        event_id: The ID of the event.
+        notes: Notes for the log.
+        liability_expected_date: Expected date for liability clearance (MM/DD/YYYY).
+        expected_payment_date: Expected date for payment (MM/DD/YYYY).
+        payment_date_sent: Date when payment was sent (MM/DD/YYYY).
+        check_number: The check number.
+        check_amount: The amount of the check.
+        send_payment_of_estimated_date: Estimated date for sending payment (MM/DD/YYYY).
+
+    Returns:
+        A JSON string with the result of the operation.
+    """
+    logger.info(f"Inserting case update log for patient ID: {patient_id}, Event ID: {event_id}")
+    try:
+        # Validation based on event_id
+        if event_id == 2 and not liability_expected_date:
+            return json.dumps({"success": False, "error": "liability_expected_date is required for event_id 2"})
+        if event_id == 5 and not expected_payment_date:
+            return json.dumps({"success": False, "error": "expected_payment_date is required for event_id 5"})
+        if event_id == 6 and not (payment_date_sent and check_number and check_amount is not None):
+            return json.dumps({"success": False, "error": "payment_date_sent, check_number, and check_amount are required for event_id 6"})
+        if event_id == 7 and not notes:
+            return json.dumps({"success": False, "error": "notes is required for event_id 7"})
+        if event_id == 20 and not send_payment_of_estimated_date:
+            return json.dumps({"success": False, "error": "send_payment_of_estimated_date is required for event_id 20"})
+
+        payload = {
+            "patientId": patient_id,
+            "userName": user_name,
+            "eventId": event_id,
+            "eventStatus": event_id,
+            "notes": notes,
+            "liabilityExpectedDate": liability_expected_date,
+            "expectedPaymentDate": expected_payment_date,
+            "paymentDateSent": payment_date_sent,
+            "checkNumber": check_number,
+            "checkAmount": check_amount,
+            "sendPaymentOfEstimatedDate": send_payment_of_estimated_date,
+        }
+        # Remove None values from payload
+        payload = {k: v for k, v in payload.items() if v is not None}
+
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        auth = (CHATBOT_API_USER, CHATBOT_API_PASSWORD)
+
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.post(
+                INSERT_CASE_UPDATE_LOG_URL,
+                json=payload,
+                headers=headers,
+                auth=auth,
+                timeout=30.0
+            )
+            response.raise_for_status()
+            return json.dumps({"success": True, "data": response.json()})
+
+    except httpx.HTTPStatusError as e:
+        error_msg = f"HTTP error occurred: {e.response.status_code} - {e.response.text}"
+        logger.error(error_msg)
+        return json.dumps({"success": False, "error": error_msg})
+    except Exception as e:
+        error_msg = f"An unexpected error occurred: {e}"
+        logger.error(f"{error_msg}\nTraceback: {traceback.format_exc()}")
+        return json.dumps({"success": False, "error": error_msg})
 
 async def _get_and_cache_jwt_token() -> str:
     """
