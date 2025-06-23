@@ -6,11 +6,19 @@ This repository contains an example of an MCP (Model Context Protocol) server ap
 
 ```
 precisemcp/
-├── mcp_precise.py       # Independent MCP Server (Streamable HTTP transport)
-├── mcp_utils.py         # Utilities for the MCP server
-├── test_client.py       # Client for testing server tools
-├── pyproject.toml       # Dependencies
-└── README.md           # This file
+├── server.py                      # Main server entry point (NEW - modular)
+├── config.py                      # Configuration management
+├── auth.py                        # JWT authentication utilities
+├── data_processing.py             # Patient data transformation
+├── tools.py                       # MCP tools definitions
+├── mcp_precise.py                 # Original monolithic server (still works)
+├── mcp_utils.py                   # Utilities for the MCP server
+├── test_client.py                 # Client for testing server tools
+├── pyproject.toml                 # Dependencies
+├── MCP_TOOLS_DOCUMENTATION.md     # Complete tool documentation
+├── MCP_TOOLS_QUICK_REFERENCE.md   # Quick reference guide
+├── REFACTORING_GUIDE.md           # Modular structure guide
+└── README.md                      # This file
 ```
 
 ## 🚀 Quick Start
@@ -45,7 +53,20 @@ precisemcp/
 
 ## 🖥️ Running the Application
 
-**Terminal 1 - Start Streamable HTTP Server:**
+### **Option 1: Modular Server (Recommended)**
+
+**Terminal 1 - Start the new modular server:**
+```bash
+# Run on default port 8000
+uv run python3 server.py
+
+# Run on a custom port (e.g., 8001)
+PORT=8001 uv run python3 server.py
+```
+
+### **Option 2: Original Monolithic Server**
+
+**Terminal 1 - Start the original server:**
 ```bash
 # Run on default port 8000
 uv run python3 mcp_precise.py
@@ -53,6 +74,9 @@ uv run python3 mcp_precise.py
 # Run on a custom port (e.g., 8001)
 PORT=8001 uv run python3 mcp_precise.py
 ```
+
+> **💡 Note**: Both servers provide identical functionality. The modular version (`server.py`) is recommended for better maintainability and development experience.
+
 The server will print the exact URL it's running on.
 
 ### Running the Test Client
@@ -64,21 +88,32 @@ Once the server is running, you can use the test client to verify the functional
 uv run python3 test_client.py
 ```
 
-## 🔧 Available Tools
+## 📋 Documentation
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `fetch_patient_info` | Fetch patient information from the RadFlow API using patient ID. | `patient_id: str` |
-| `fetch_patient_by_id` | Fetch patient information by ID from the RadFlow API. | `patient_id: str` |
-| `fetch_study_details` | Fetch study details for a patient by their ID. | `patient_id: str` |
-| `fetch_patient_by_phone` | Fetch patient data from the API using phone number. | `phone: str` |
-| `get_patient_todo_status` | Get the to-do status for a patient from the RadFlow API. | `patient_id: str`, `document_type_id: int = 21`, `logged_partner_id: int = 1`, `patient_preferred_language: str = "english"` |
+### 📖 Complete Tool Documentation
+- **[MCP Tools Documentation](MCP_TOOLS_DOCUMENTATION.md)** - Comprehensive documentation for all MCP tools
+- **[Quick Reference Guide](MCP_TOOLS_QUICK_REFERENCE.md)** - Quick lookup table for tools and parameters
+- **[Refactoring Guide](REFACTORING_GUIDE.md)** - Details about the modular code organization
 
-## 📚 Available Resources
+### 🔧 Available Tools (Summary)
+
+The server exposes **8 MCP tools** organized into categories:
+
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| **Patient Info** | `fetch_patient_info`, `fetch_patient_by_id`, `fetch_patient_by_phone` | Patient data retrieval |
+| **Studies** | `fetch_study_details` | Medical study information |
+| **Case Management** | `get_case_update_details`, `insert_case_update_log` | Case tracking and updates |
+| **Reporting** | `get_patient_report` | Patient reports |
+| **Tasks** | `get_patient_todo_status` | Patient to-do items |
+
+### 📚 Available Resources
 
 | Resource | URI | Description |
 |----------|-----|-------------|
-| Greeting | `hello://greeting` | A simple greeting message |
+| Greeting | `hello://greeting` | Server health check and greeting |
+
+> 💡 **For detailed tool documentation including parameters, return values, and examples, see [MCP_TOOLS_DOCUMENTATION.md](MCP_TOOLS_DOCUMENTATION.md)**
 
 ## 🛠️ Development
 
@@ -126,14 +161,18 @@ async def your_resource() -> str:
 
 ## 🚀 Next Steps
 
-1. **Add Real APIs**: Replace mock weather data with real API calls
-2. **More Tools**: Add database, file system, or calculation tools
-3. **Authentication**: Add secure authentication for production use
-4. **Logging**: Enhanced logging and monitoring
-5. **Error Handling**: More robust error handling and recovery
-6. **WebSocket Support**: Add WebSocket transport option
-7. **Load Balancing**: Configure multiple server instances
-8. **Port Configuration**: Add environment variable support for custom ports
+1. ✅ **Real APIs**: Integrated with RadFlow and Chatbot APIs
+2. ✅ **Authentication**: JWT and Basic auth implemented with caching
+3. ✅ **Logging**: Enhanced logging and monitoring implemented
+4. ✅ **Error Handling**: Robust error handling and recovery implemented
+5. ✅ **Port Configuration**: Environment variable support for custom ports
+6. ✅ **Modular Architecture**: Clean separation of concerns with multiple modules
+7. **More Tools**: Add database, file system, or calculation tools
+8. **WebSocket Support**: Add WebSocket transport option
+9. **Load Balancing**: Configure multiple server instances
+10. **Testing Suite**: Add comprehensive unit and integration tests
+11. **Docker Support**: Add containerization for easy deployment
+12. **API Rate Limiting**: Implement request rate limiting and throttling
 
 ## 📝 License
 
