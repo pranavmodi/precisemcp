@@ -262,6 +262,36 @@ The PreciseMCP server provides a set of tools for interacting with the RadFlow A
 
 ---
 
+### `get_patient_lien_bill_balance`
+**Description**: Get patient lien bill balance details from the RadFlow API.
+
+**Parameters**:
+- `patient_id` (string, required): The ID of the patient to fetch lien bill balance details for
+
+**Returns**: JSON string containing lien bill balance details or error message
+```json
+{
+  "success": boolean,
+  "data": "object"
+}
+```
+
+**Authentication**: Uses Chatbot API credentials (Basic Auth)
+
+**Example Usage**:
+```json
+{
+  "tool": "get_patient_lien_bill_balance",
+  "arguments": {
+    "patient_id": "PRE00001"
+  }
+}
+```
+
+---
+
+## Patient Status and Tasks
+
 ### `get_patient_todo_status`
 **Description**: Get the to-do status for a patient from the RadFlow API.
 

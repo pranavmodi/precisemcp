@@ -97,7 +97,7 @@ uv run python3 test_client.py
 
 ### 🔧 Available Tools (Summary)
 
-The server exposes **8 MCP tools** organized into categories:
+The server exposes **9 MCP tools** organized into categories:
 
 | Category | Tools | Purpose |
 |----------|-------|---------|
@@ -105,6 +105,7 @@ The server exposes **8 MCP tools** organized into categories:
 | **Studies** | `fetch_study_details` | Medical study information |
 | **Case Management** | `get_case_update_details`, `insert_case_update_log` | Case tracking and updates |
 | **Reporting** | `get_patient_report` | Patient reports |
+| **Billing** | `get_patient_lien_bill_balance` | Patient billing and lien information |
 | **Tasks** | `get_patient_todo_status` | Patient to-do items |
 
 ### 📚 Available Resources

@@ -12,6 +12,7 @@
 | `get_case_update_details` | Case Management | `patient_id` | Get case update details | Chatbot API |
 | `insert_case_update_log` | Case Management | `patient_id`, `user_name`, `event_id`, + optional fields | Insert case update log | Chatbot API |
 | `get_patient_report` | Reporting | `patient_id` | Get patient report | Chatbot API |
+| `get_patient_lien_bill_balance` | Billing | `patient_id` | Get patient lien bill balance details | Chatbot API |
 | `get_patient_todo_status` | Tasks | `patient_id` + optional params | Get patient to-do status | JWT Auth |
 
 ## Quick Parameter Reference
@@ -78,6 +79,14 @@
     "event_id": 7,
     "notes": "Patient follow-up completed"
   }
+}
+```
+
+### Get Lien Bill Balance
+```json
+{
+  "tool": "get_patient_lien_bill_balance",
+  "arguments": { "patient_id": "PRE00001" }
 }
 ```
 

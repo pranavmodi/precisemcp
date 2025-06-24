@@ -16,7 +16,8 @@ from config import (
     CHATBOT_API_PASSWORD,
     GET_CASE_UPDATE_DETAILS_URL,
     GET_PATIENT_REPORT_URL,
-    INSERT_CASE_UPDATE_LOG_URL
+    INSERT_CASE_UPDATE_LOG_URL,
+    GET_PATIENT_LIEN_BILL_BALANCE_URL
 )
 from data_processing import process_patient_data
 from auth import get_and_cache_jwt_token
@@ -672,5 +673,48 @@ def register_tools(mcp):
 
         except Exception as e:
             error_msg = f"An unexpected error occurred while getting patient to-do status: {str(e)}"
+            logger.error(f"{error_msg}\nTraceback: {traceback.format_exc()}")
+            return json.dumps({"success": False, "error": error_msg})
+
+    @mcp.tool()
+    async def get_patient_lien_bill_balance(patient_id: str) -> str:
+        """
+        Get patient lien bill balance details from the RadFlow API.
+
+        Args:
+            patient_id: The ID of the patient to fetch lien bill balance details for.
+
+        Returns:
+            JSON string with the patient lien bill balance details or an error message.
+        """
+        logger.info(f"Fetching lien bill balance details for patient ID: {patient_id}")
+        try:
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+            payload = {"patientId": patient_id}
+            auth = (CHATBOT_API_USER, CHATBOT_API_PASSWORD)
+
+            async with httpx.AsyncClient(verify=False) as client:
+                response = await client.post(
+                    GET_PATIENT_LIEN_BILL_BALANCE_URL,
+                    json=payload,
+                    headers=headers,
+                    auth=auth,
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                
+                data = response.json()
+                logger.info(f"Successfully retrieved lien bill balance details for patient ID: {patient_id}")
+                return json.dumps({"success": True, "data": data}, indent=2)
+
+        except httpx.HTTPStatusError as e:
+            error_msg = f"HTTP error occurred: {e.response.status_code} - {e.response.text}"
+            logger.error(error_msg)
+            return json.dumps({"success": False, "error": error_msg})
+        except Exception as e:
+            error_msg = f"An unexpected error occurred: {e}"
             logger.error(f"{error_msg}\nTraceback: {traceback.format_exc()}")
             return json.dumps({"success": False, "error": error_msg}) 
