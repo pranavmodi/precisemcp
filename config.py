@@ -17,7 +17,7 @@ CHATBOT_API_PASSWORD = "lcNvSuG3pXDb0rht6Vwh0rhDpXCCzCzCzWe4L3GjQsGHpXiz0rxZ6V4s
 GET_CASE_UPDATE_DETAILS_URL = "https://staging-app.radflow360.com/chatbotapi/GetCaseUpdateDetailsChatbot"
 GET_PATIENT_REPORT_URL = "https://staging-app.radflow360.com/chatbotapi/GetPatientReportChatbot"
 INSERT_CASE_UPDATE_LOG_URL = "https://staging-app.radflow360.com/chatbotapi/InsertCaseUpdateLogChatbot"
-GET_PATIENT_LIEN_BILL_BALANCE_URL = "https://staging-app.radflow360.com/chatbotapi/GetPatientLienBillBalanceDetails"
+GET_PATIENT_LIEN_BILL_BALANCE_URL = "https://staging-app.radflow360.com/ChatBotAPI/GetPatientLienBillBalanceDetails"
 
 # Server Configuration
 DEFAULT_PORT = 8001
