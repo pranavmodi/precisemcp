@@ -38,7 +38,7 @@ if __name__ == "__main__":
     print("  🏥 RadFlow API integration enabled")
     print("  👤 Patient lookup by ID, phone number")
     print("  📋 Study details retrieval")
-    print("  🆕 Raw study details response logging is ENABLED (mofo tools.py)")
+    print("  🆕 Raw study details response logging is fucking ENABLED (mofo tools.py)")
     print("=" * 60)
     
     # Run with uvicorn for better control over port
