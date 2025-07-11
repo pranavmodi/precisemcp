@@ -410,7 +410,8 @@ async def fetch_study_details(patient_id: str) -> str:
                         "modality": study.get("Modality", ""),
                         "referring_physician": study.get("SchedulerName", "").strip(),
                         "insurance": "",  # Not provided in API
-                        "authorization_number": study.get("AccessionNumber", "")
+                        "authorization_number": study.get("AccessionNumber", ""),
+                        "study_date_time": study.get("StudyDateTime", "")
                     }
                     transformed_studies.append(transformed_study)
                 
@@ -842,6 +843,7 @@ if __name__ == "__main__":
     print("  🏥 RadFlow API integration enabled")
     print("  👤 Patient lookup by ID, phone number")
     print("  📋 Study details retrieval")
+    print("  🆕 Raw study details response logging is fucking ENABLED")
     print("=" * 60)
     
     # Run with uvicorn for better control over port

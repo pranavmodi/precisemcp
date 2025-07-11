@@ -246,6 +246,8 @@ def register_tools(mcp):
                 )
                 
                 response.raise_for_status()
+                # Log raw response for debugging (first 1000 chars)
+                # logger.info(f"Raw study details API response: {response.text}")
                 
                 try:
                     data = response.json()
@@ -312,7 +314,8 @@ def register_tools(mcp):
                             "modality": study.get("Modality", ""),
                             "referring_physician": study.get("SchedulerName", "").strip(),
                             "insurance": "",  # Not provided in API
-                            "authorization_number": study.get("AccessionNumber", "")
+                            "authorization_number": study.get("AccessionNumber", ""),
+                            "study_date_time": study.get("StudyDateTime", "")
                         }
                         transformed_studies.append(transformed_study)
                     
