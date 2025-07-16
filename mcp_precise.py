@@ -40,6 +40,42 @@ JWT_CACHE = {"token": None, "expires_at": 0}
 # Create FastMCP server instance with streamable HTTP support
 mcp = FastMCP("precise-mcp-server", stateless_http=True)
 
+def format_doi(doi: str) -> str:
+    """
+    Format DOI to the required format: YYYY-MM-DD HH:MM:SS
+    
+    Args:
+        doi: DOI string in various formats (YYYY-MM-DD or MM/DD/YYYY)
+        
+    Returns:
+        Formatted DOI string in YYYY-MM-DD HH:MM:SS format
+    """
+    if not doi:
+        return ""
+    
+    doi = doi.strip()
+    logger.debug(f"format_doi input: '{doi}'")
+    
+    # Handle MM/DD/YYYY format (e.g., "06/01/2024")
+    if "/" in doi and len(doi) == 10:
+        try:
+            month, day, year = doi.split("/")
+            formatted = f"{year}-{month.zfill(2)}-{day.zfill(2)} 00:00:00"
+            logger.debug(f"Converted MM/DD/YYYY '{doi}' to '{formatted}'")
+            return formatted
+        except ValueError:
+            logger.warning(f"Failed to parse MM/DD/YYYY format: '{doi}'")
+    
+    # Handle YYYY-MM-DD format (length 10), add time component
+    elif len(doi) == 10 and "-" in doi:
+        formatted = f"{doi} 00:00:00"
+        logger.debug(f"Added time to YYYY-MM-DD '{doi}' -> '{formatted}'")
+        return formatted
+    
+    # If already includes time component, return as is
+    logger.debug(f"Using DOI as-is: '{doi}'")
+    return doi
+
 def process_patient_data(data: Dict[str, Any], phone: str) -> Dict[str, Any]:
     """
     Process patient data from API response.
@@ -537,6 +573,115 @@ async def fetch_patient_by_phone(phone: str) -> str:
     except Exception as e:
         error_msg = f"Failed to fetch patient data: {str(e)}"
         logger.error(f"Unexpected error in fetch_patient_by_phone: {error_msg}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return json.dumps({
+            "success": False,
+            "error": error_msg
+        })
+
+@mcp.tool()
+async def fetch_patient_by_name_and_doi(firstName: str, lastName: str, doi: str) -> str:
+    """
+    Fetch patient data from the API using first name, last name, and date of injury.
+    
+    Args:
+        firstName: Patient's first name
+        lastName: Patient's last name
+        doi: Date of injury in YYYY-MM-DD format (will be converted to YYYY-MM-DD 00:00:00)
+        
+    Returns:
+        JSON string with patient data
+    """
+    try:
+        logger.info(f"Fetching patient data for name: {firstName} {lastName}, DOI: {doi}")
+        
+        # Convert names to uppercase as expected by the API
+        upper_firstName = firstName.upper()
+        upper_lastName = lastName.upper()
+        
+        # Format DOI to include time component using the helper function
+        formatted_doi = format_doi(doi)
+        
+        logger.info(f"🔍 DOI FORMATTING: Input '{doi}' -> Formatted '{formatted_doi}'")
+        logger.info(f"🔍 NAME FORMATTING: '{firstName}' '{lastName}' -> '{upper_firstName}' '{upper_lastName}'")
+        
+        payload = {
+            "patientId": "",
+            "phone": "",
+            "firstName": upper_firstName,
+            "lastName": upper_lastName,
+            "birthDate": "",
+            "doi": formatted_doi,
+            "accessionNumber": "",
+            "requiredField": "Details"
+        }
+        
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        
+        logger.info(f"🚀 ACTUAL PAYLOAD BEING SENT: {json.dumps(payload, indent=2)}")
+        logger.debug(f"Making API request to {RADFLOW_API_URL}")
+        
+        async with httpx.AsyncClient(verify=False) as client:
+            logger.debug("Created httpx client")
+            
+            try:
+                response = await client.post(
+                    RADFLOW_API_URL,
+                    json=payload,
+                    headers=headers,
+                    timeout=30.0
+                )
+                logger.debug(f"Received API response with status code: {response.status_code}")
+                
+                if response.status_code != 200:
+                    error_msg = f"API request failed with status {response.status_code}: {response.text}"
+                    logger.error(error_msg)
+                    return json.dumps({
+                        "success": False,
+                        "error": error_msg
+                    })
+                
+                try:
+                    data = response.json()
+                    logger.debug("Successfully parsed JSON response")
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse JSON response: {e}\nResponse text: {response.text[:500]}")
+                    return json.dumps({
+                        "success": False,
+                        "error": "Invalid JSON response from API"
+                    })
+                
+                logger.info(f"Processing patient data response for name: {firstName} {lastName}")
+                result = process_patient_data(data, "")
+                
+                if result["success"]:
+                    logger.info(f"Successfully retrieved patient data: {result['message']}")
+                else:
+                    logger.error(f"Failed to process patient data: {result.get('error', 'Unknown error')}")
+                
+                return json.dumps(result, indent=2)
+                
+            except httpx.TimeoutException:
+                error_msg = "API request timed out after 30 seconds"
+                logger.error(error_msg)
+                return json.dumps({
+                    "success": False,
+                    "error": error_msg
+                })
+            except httpx.ConnectError as e:
+                error_msg = f"Connection error: {str(e)}"
+                logger.error(f"Connection error while fetching patient data: {error_msg}")
+                return json.dumps({
+                    "success": False,
+                    "error": error_msg
+                })
+                
+    except Exception as e:
+        error_msg = f"Failed to fetch patient data: {str(e)}"
+        logger.error(f"Unexpected error in fetch_patient_by_name_and_doi: {error_msg}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         return json.dumps({
             "success": False,

@@ -111,6 +111,36 @@ The PreciseMCP server provides a set of tools for interacting with the RadFlow A
 }
 ```
 
+### `fetch_patient_by_name_and_doi`
+**Description**: Fetch patient data using first name, last name, and date of injury.
+
+**Parameters**:
+- `firstName` (string, required): Patient's first name
+- `lastName` (string, required): Patient's last name  
+- `doi` (string, required): Date of injury in YYYY-MM-DD format (automatically converted to YYYY-MM-DD 00:00:00)
+
+**Returns**: JSON string containing:
+```json
+{
+  "success": true,
+  "data": {
+    // Patient data from RadFlow API
+  }
+}
+```
+
+**Example Usage**:
+```json
+{
+  "tool": "fetch_patient_by_name_and_doi",
+  "arguments": {
+    "firstName": "SERVANDO",
+    "lastName": "ZAMORA", 
+    "doi": "2024-06-01"
+  }
+}
+```
+
 ---
 
 ## Study Management Tools

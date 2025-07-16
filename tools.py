@@ -448,6 +448,110 @@ def register_tools(mcp):
             })
 
     @mcp.tool()
+    async def fetch_patient_by_name_and_doi(firstName: str, lastName: str, doi: str) -> str:
+        """
+        Fetch patient data from the API using first name, last name, and date of injury.
+        
+        Args:
+            firstName: Patient's first name
+            lastName: Patient's last name
+            doi: Date of injury in YYYY-MM-DD format (will be converted to YYYY-MM-DD 00:00:00)
+            
+        Returns:
+            JSON string with patient data
+        """
+        try:
+            logger.info(f"Fetching patient data for name: {firstName} {lastName}, DOI: {doi}")
+            
+            # Convert names to uppercase as expected by the API
+            upper_firstName = firstName.upper()
+            upper_lastName = lastName.upper()
+            
+            # Format DOI to include time component if not already present
+            formatted_doi = doi
+            if len(doi) == 10:  # If format is YYYY-MM-DD
+                formatted_doi = f"{doi} 00:00:00"
+            
+            logger.debug(f"Formatted names: {upper_firstName} {upper_lastName}, DOI: {formatted_doi}")
+            
+            payload = {
+                "patientId": "",
+                "phone": "",
+                "firstName": upper_firstName,
+                "lastName": upper_lastName,
+                "birthDate": "",
+                "doi": formatted_doi,
+                "accessionNumber": "",
+                "requiredField": "Details"
+            }
+            
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+            
+            logger.debug(f"Making API request to {RADFLOW_API_URL} with payload: {json.dumps(payload)}")
+            
+            async with httpx.AsyncClient(verify=False) as client:
+                logger.debug("Created httpx client")
+                
+                try:
+                    response = await client.post(
+                        RADFLOW_API_URL,
+                        json=payload,
+                        headers=headers,
+                        timeout=30.0
+                    )
+                    logger.debug(f"Received API response with status code: {response.status_code}")
+                    
+                    if response.status_code != 200:
+                        error_msg = f"API request failed with status {response.status_code}: {response.text}"
+                        logger.error(error_msg)
+                        return json.dumps({
+                            "success": False,
+                            "error": error_msg
+                        })
+                    
+                    response_text = response.text
+                    logger.debug(f"API response text: {response_text}")
+                    
+                    # Parse JSON response
+                    try:
+                        json_response = response.json()
+                        logger.debug(f"Parsed JSON response: {json.dumps(json_response, indent=2)}")
+                        
+                        return json.dumps({
+                            "success": True,
+                            "data": json_response
+                        }, indent=2)
+                        
+                    except json.JSONDecodeError as json_error:
+                        logger.error(f"Failed to parse JSON response: {json_error}")
+                        logger.error(f"Raw response: {response_text}")
+                        return json.dumps({
+                            "success": False,
+                            "error": f"Invalid JSON in API response: {str(json_error)}",
+                            "raw_response": response_text
+                        })
+                    
+                except httpx.ConnectError as e:
+                    error_msg = f"Connection error - unable to reach RadFlow API: {str(e)}"
+                    logger.error(f"Connection error while fetching patient data: {error_msg}")
+                    return json.dumps({
+                        "success": False,
+                        "error": error_msg
+                    })
+                    
+        except Exception as e:
+            error_msg = f"Failed to fetch patient data: {str(e)}"
+            logger.error(f"Unexpected error in fetch_patient_by_name_and_doi: {error_msg}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return json.dumps({
+                "success": False,
+                "error": error_msg
+            })
+
+    @mcp.tool()
     async def get_case_update_details(patient_id: str) -> str:
         """
         Fetches case update details for a given patient.

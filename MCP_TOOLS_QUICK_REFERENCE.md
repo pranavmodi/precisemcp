@@ -8,6 +8,7 @@
 | `fetch_patient_info` | Patient Info | `patient_id` | Get comprehensive patient data | RadFlow API |
 | `fetch_patient_by_id` | Patient Info | `patient_id` | Get patient data (simplified) | RadFlow API |
 | `fetch_patient_by_phone` | Patient Info | `phone` | Find patients by phone number | RadFlow API |
+| `fetch_patient_by_name_and_doi` | Patient Info | `firstName`, `lastName`, `doi` | Find patients by name and date of injury | RadFlow API |
 | `fetch_study_details` | Studies | `patient_id` | Get patient study information | RadFlow API |
 | `get_case_update_details` | Case Management | `patient_id` | Get case update details | Chatbot API |
 | `insert_case_update_log` | Case Management | `patient_id`, `user_name`, `event_id`, + optional fields | Insert case update log | Chatbot API |
@@ -18,8 +19,9 @@
 ## Quick Parameter Reference
 
 ### Required Parameters
-- **patient_id**: All tools except `fetch_patient_by_phone` and `hello://greeting`
+- **patient_id**: All tools except `fetch_patient_by_phone`, `fetch_patient_by_name_and_doi`, and `hello://greeting`
 - **phone**: Only `fetch_patient_by_phone`
+- **firstName, lastName, doi**: Only `fetch_patient_by_name_and_doi`
 - **user_name**: Only `insert_case_update_log`
 - **event_id**: Only `insert_case_update_log`
 
@@ -66,6 +68,18 @@
 {
   "tool": "fetch_patient_by_phone", 
   "arguments": { "phone": "+15551234567" }
+}
+```
+
+### Find Patient by Name and DOI
+```json
+{
+  "tool": "fetch_patient_by_name_and_doi",
+  "arguments": { 
+    "firstName": "SERVANDO",
+    "lastName": "ZAMORA", 
+    "doi": "2024-06-01"
+  }
 }
 ```
 

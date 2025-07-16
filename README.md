@@ -97,11 +97,11 @@ uv run python3 test_client.py
 
 ### 🔧 Available Tools (Summary)
 
-The server exposes **9 MCP tools** organized into categories:
+The server exposes **10 MCP tools** organized into categories:
 
 | Category | Tools | Purpose |
 |----------|-------|---------|
-| **Patient Info** | `fetch_patient_info`, `fetch_patient_by_id`, `fetch_patient_by_phone` | Patient data retrieval |
+| **Patient Info** | `fetch_patient_info`, `fetch_patient_by_id`, `fetch_patient_by_phone`, `fetch_patient_by_name_and_doi` | Patient data retrieval |
 | **Studies** | `fetch_study_details` | Medical study information |
 | **Case Management** | `get_case_update_details`, `insert_case_update_log` | Case tracking and updates |
 | **Reporting** | `get_patient_report` | Patient reports |
