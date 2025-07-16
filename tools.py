@@ -548,28 +548,33 @@ def register_tools(mcp):
                             "error": error_msg
                         })
                     
-                    response_text = response.text
-                    logger.debug(f"API response text: {response_text}")
-                    
-                    # Parse JSON response
                     try:
-                        json_response = response.json()
-                        logger.debug(f"Parsed JSON response: {json.dumps(json_response, indent=2)}")
-                        
-                        return json.dumps({
-                            "success": True,
-                            "data": json_response
-                        }, indent=2)
-                        
-                    except json.JSONDecodeError as json_error:
-                        logger.error(f"Failed to parse JSON response: {json_error}")
-                        logger.error(f"Raw response: {response_text}")
+                        data = response.json()
+                        logger.debug("Successfully parsed JSON response")
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Failed to parse JSON response: {e}\nResponse text: {response.text[:500]}")
                         return json.dumps({
                             "success": False,
-                            "error": f"Invalid JSON in API response: {str(json_error)}",
-                            "raw_response": response_text
+                            "error": "Invalid JSON response from API"
                         })
                     
+                    logger.info(f"Processing patient data response for name: {firstName} {lastName}")
+                    result = process_patient_data(data, "")
+                    
+                    if result["success"]:
+                        logger.info(f"Successfully retrieved patient data: {result['message']}")
+                    else:
+                        logger.error(f"Failed to process patient data: {result.get('error', 'Unknown error')}")
+                    
+                    return json.dumps(result, indent=2)
+                    
+                except httpx.TimeoutException:
+                    error_msg = "API request timed out after 30 seconds"
+                    logger.error(error_msg)
+                    return json.dumps({
+                        "success": False,
+                        "error": error_msg
+                    })
                 except httpx.ConnectError as e:
                     error_msg = f"Connection error - unable to reach RadFlow API: {str(e)}"
                     logger.error(f"Connection error while fetching patient data: {error_msg}")

@@ -93,6 +93,7 @@ uv run python3 test_client.py
 ### 📖 Complete Tool Documentation
 - **[MCP Tools Documentation](MCP_TOOLS_DOCUMENTATION.md)** - Comprehensive documentation for all MCP tools
 - **[Quick Reference Guide](MCP_TOOLS_QUICK_REFERENCE.md)** - Quick lookup table for tools and parameters
+- **[Output Format Specification](OUTPUT_FORMAT_SPECIFICATION.md)** - 🎯 **For integration: Exact response format and code examples**
 - **[Refactoring Guide](REFACTORING_GUIDE.md)** - Details about the modular code organization
 
 ### 🔧 Available Tools (Summary)
