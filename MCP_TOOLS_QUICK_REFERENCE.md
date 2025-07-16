@@ -8,7 +8,7 @@
 | `fetch_patient_info` | Patient Info | `patient_id` | Get comprehensive patient data | RadFlow API |
 | `fetch_patient_by_id` | Patient Info | `patient_id` | Get patient data (simplified) | RadFlow API |
 | `fetch_patient_by_phone` | Patient Info | `phone` | Find patients by phone number | RadFlow API |
-| `fetch_patient_by_name_and_doi` | Patient Info | `firstName`, `lastName`, `doi` | Find patients by name and date of injury | RadFlow API |
+| `fetch_patient_by_name_and_doi` | Patient Info | `firstName`, `lastName`, `doi` | Find patients by name and date of injury (supports YYYY-MM-DD or MM/DD/YYYY) | RadFlow API |
 | `fetch_study_details` | Studies | `patient_id` | Get patient study information | RadFlow API |
 | `get_case_update_details` | Case Management | `patient_id` | Get case update details | Chatbot API |
 | `insert_case_update_log` | Case Management | `patient_id`, `user_name`, `event_id`, + optional fields | Insert case update log | Chatbot API |
@@ -78,10 +78,11 @@
   "arguments": { 
     "firstName": "SERVANDO",
     "lastName": "ZAMORA", 
-    "doi": "2024-06-01"
+    "doi": "06/01/2024"
   }
 }
 ```
+**Note**: DOI supports both `"06/01/2024"` (MM/DD/YYYY) and `"2024-06-01"` (YYYY-MM-DD) formats.
 
 ### Add Case Note
 ```json

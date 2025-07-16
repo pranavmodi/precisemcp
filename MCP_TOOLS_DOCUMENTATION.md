@@ -117,7 +117,7 @@ The PreciseMCP server provides a set of tools for interacting with the RadFlow A
 **Parameters**:
 - `firstName` (string, required): Patient's first name
 - `lastName` (string, required): Patient's last name  
-- `doi` (string, required): Date of injury in YYYY-MM-DD format (automatically converted to YYYY-MM-DD 00:00:00)
+- `doi` (string, required): Date of injury in YYYY-MM-DD or MM/DD/YYYY format (automatically converted to YYYY-MM-DD 00:00:00)
 
 **Returns**: JSON string containing:
 ```json
@@ -136,10 +136,16 @@ The PreciseMCP server provides a set of tools for interacting with the RadFlow A
   "arguments": {
     "firstName": "SERVANDO",
     "lastName": "ZAMORA", 
-    "doi": "2024-06-01"
+    "doi": "06/01/2024"
   }
 }
 ```
+
+**Supported DOI Formats**:
+- `"2024-06-01"` (YYYY-MM-DD)
+- `"06/01/2024"` (MM/DD/YYYY)
+
+Both formats are automatically converted to `"2024-06-01 00:00:00"` for the API.
 
 ---
 
@@ -407,7 +413,9 @@ All authentication is handled internally by the server.
 ## Usage Notes
 
 1. **Patient ID Format**: Patient IDs should be provided as strings
-2. **Date Format**: All dates should be in MM/DD/YYYY format
+2. **Date Formats**: 
+   - **DOI (Date of Injury)**: Supports both YYYY-MM-DD and MM/DD/YYYY formats (automatically converted)
+   - **Other dates**: Use MM/DD/YYYY format for case update dates
 3. **Phone Numbers**: Support international format with +1 prefix (automatically normalized)
 4. **Event IDs**: Specific validation rules apply based on the event type
 5. **Language Support**: Patient preferred language defaults to "english"

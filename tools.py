@@ -24,6 +24,42 @@ from auth import get_and_cache_jwt_token
 
 logger = logging.getLogger("precise-mcp-server")
 
+def format_doi(doi: str) -> str:
+    """
+    Format DOI to the required format: YYYY-MM-DD HH:MM:SS
+    
+    Args:
+        doi: DOI string in various formats (YYYY-MM-DD or MM/DD/YYYY)
+        
+    Returns:
+        Formatted DOI string in YYYY-MM-DD HH:MM:SS format
+    """
+    if not doi:
+        return ""
+    
+    doi = doi.strip()
+    logger.debug(f"format_doi input: '{doi}'")
+    
+    # Handle MM/DD/YYYY format (e.g., "06/01/2024")
+    if "/" in doi and len(doi) == 10:
+        try:
+            month, day, year = doi.split("/")
+            formatted = f"{year}-{month.zfill(2)}-{day.zfill(2)} 00:00:00"
+            logger.debug(f"Converted MM/DD/YYYY '{doi}' to '{formatted}'")
+            return formatted
+        except ValueError:
+            logger.warning(f"Failed to parse MM/DD/YYYY format: '{doi}'")
+    
+    # Handle YYYY-MM-DD format (length 10), add time component
+    elif len(doi) == 10 and "-" in doi:
+        formatted = f"{doi} 00:00:00"
+        logger.debug(f"Added time to YYYY-MM-DD '{doi}' -> '{formatted}'")
+        return formatted
+    
+    # If already includes time component, return as is
+    logger.debug(f"Using DOI as-is: '{doi}'")
+    return doi
+
 def register_tools(mcp):
     """Register all MCP tools with the FastMCP instance."""
     
@@ -467,12 +503,11 @@ def register_tools(mcp):
             upper_firstName = firstName.upper()
             upper_lastName = lastName.upper()
             
-            # Format DOI to include time component if not already present
-            formatted_doi = doi
-            if len(doi) == 10:  # If format is YYYY-MM-DD
-                formatted_doi = f"{doi} 00:00:00"
+            # Format DOI to include time component using the helper function
+            formatted_doi = format_doi(doi)
             
-            logger.debug(f"Formatted names: {upper_firstName} {upper_lastName}, DOI: {formatted_doi}")
+            logger.info(f"🔍 DOI FORMATTING: Input '{doi}' -> Formatted '{formatted_doi}'")
+            logger.info(f"🔍 NAME FORMATTING: '{firstName}' '{lastName}' -> '{upper_firstName}' '{upper_lastName}'")
             
             payload = {
                 "patientId": "",
@@ -490,7 +525,8 @@ def register_tools(mcp):
                 "Content-Type": "application/json"
             }
             
-            logger.debug(f"Making API request to {RADFLOW_API_URL} with payload: {json.dumps(payload)}")
+            logger.info(f"🚀 ACTUAL PAYLOAD BEING SENT: {json.dumps(payload, indent=2)}")
+            logger.debug(f"Making API request to {RADFLOW_API_URL}")
             
             async with httpx.AsyncClient(verify=False) as client:
                 logger.debug("Created httpx client")
